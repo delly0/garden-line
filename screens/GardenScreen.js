@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Text } from 'react-native';
 import LottieView from 'lottie-react-native';
-import Sun from '../components/Sun';
 import NightStarLayer from '../components/NightStarLayer';
-import DayMoodAura from '../components/DayMoodAura';
+import SkyGradient from '../components/SkyGradient';
+import Clouds from '../components/Clouds';
+import useCelestialPosition from '../utils/useCelestialPosition';
+import Sun from '../components/Sun';
+import Moon from '../components/Moon';
+import MoodLamp from '../components/MoodLamp';
+import useWeather from '../hooks/useWeather';
 
 const { width } = Dimensions.get('window');
 
@@ -14,20 +19,20 @@ const flowerSources = [
   require('../assets/lottie/flower4.json'),
 ];
 
-
 export default function GardenScreen() {
   const [moodColor, setMoodColor] = useState('#FFDDEE');
   const [timeOfDay, setTimeOfDay] = useState('day');
   const [plantedFlowers, setPlantedFlowers] = useState([]);
+  const { x, y } = useCelestialPosition(timeOfDay);
+  const { weather, error } = useWeather();
 
   const plantRandomFlower = () => {
     const source = flowerSources[Math.floor(Math.random() * flowerSources.length)];
-    const left = Math.random() * 0.8 + 0.1; // 10% to 90% across
+    const left = Math.random() * 0.8 + 0.1;
 
-    // Flower spawn range: bottom 45% of screen height
     const screenHeight = Dimensions.get('window').height;
     const groundTopY = screenHeight * 0.40;
-    const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25); // subtract flower height
+    const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
 
     const newFlower = {
       id: Date.now().toString(),
@@ -39,65 +44,81 @@ export default function GardenScreen() {
     setPlantedFlowers((prev) => [...prev, newFlower]);
   };
 
-
-
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 7) setTimeOfDay('sunrise');
-    else if (hour >= 7 && hour < 18) setTimeOfDay('day');
-    else if (hour >= 18 && hour < 20) setTimeOfDay('sunset');
-    else setTimeOfDay('night');
-  }, []);
+    if (!weather) return;
 
-  const getSkyStyle = () => {
-    switch (timeOfDay) {
-      case 'sunrise': return { backgroundColor: '#FFCBA4' };
-      case 'day': return { backgroundColor: '#BEE3F8' };
-      case 'sunset': return { backgroundColor: '#FDB5B5' };
-      case 'night': return { backgroundColor: '#1B1F3B' };
-    }
-  };
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const sunriseTime = parseTime12h(weather.sunrise);
+    const sunsetTime = parseTime12h(weather.sunset);
+
+    const sunriseMin = sunriseTime.hours * 60 + sunriseTime.minutes;
+    const sunsetMin = sunsetTime.hours * 60 + sunsetTime.minutes;
+
+    if (currentMinutes < sunriseMin) setTimeOfDay('night');
+    else if (currentMinutes < sunriseMin + 60) setTimeOfDay('sunrise');
+    else if (currentMinutes < sunsetMin - 60) setTimeOfDay('day');
+    else if (currentMinutes < sunsetMin) setTimeOfDay('sunset');
+    else setTimeOfDay('night');
+
+  }, [weather]);
+
+  function parseTime12h(timeStr) {
+  // e.g. "6:00 AM" or "7:01 PM"
+  const [time, modifier] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+
+  if (modifier === 'PM' && hours !== 12) {
+    hours += 12;
+  }
+  if (modifier === 'AM' && hours === 12) {
+    hours = 0;
+  }
+
+  return { hours, minutes };
+}
 
   return (
     <View style={styles.container}>
-      {/* Sky Background */}
-      <View style={[styles.sky, getSkyStyle()]} />
+      <SkyGradient timeOfDay={timeOfDay} />
+      {(timeOfDay === 'day' || timeOfDay === 'sunrise') && (
+        <Clouds show={true} cloud={weather?.cloud} />
+      )}
 
-      {/* Mood Effects */}
       {(timeOfDay === 'night' || timeOfDay === 'sunset') && (
-        <NightStarLayer color={moodColor} />
+        <NightStarLayer />
       )}
 
-      {(timeOfDay === 'day') && (
-        <>
-          <DayMoodAura color={moodColor} />
-          <Sun />
-        </>
-      )}
+      <MoodLamp color={moodColor} />
 
-      {timeOfDay === 'sunrise' && <Sun />}
+      {timeOfDay === 'day' && <Sun x={x} y={y} />}
+      {timeOfDay === 'night' && <Moon x={x} y={y} />}
+      {timeOfDay === 'sunrise' && <Sun x={x} y={y} />}
+      {timeOfDay === 'sunset' && <Moon x={x} y={y} />}
 
-      {/* Ground visual */}
       <View style={styles.ground} />
 
-      {/* Garden with Lottie flowers */}
-      {plantedFlowers.map((flower) => (
-      <LottieView
-        key={flower.id}
-        source={flower.source}
-        autoPlay
-        loop
-        style={{
-          position: 'absolute',
-          width: width * 0.25,
-          height: width * 0.25,
-          left: flower.left * width,
-          top: flower.top,
-        }}
-      />
-    ))}
+      {/* <Clouds show={timeOfDay === 'day' || timeOfDay === 'sunrise'} coverage={weather?.clouds?.all / 100 || 0} /> */}
+      <Clouds show={timeOfDay === 'day' || timeOfDay === 'sunrise'} coverage={(weather?.cloud || 0) / 100} />
 
-      {/* 🌞 Manual time-of-day toggle buttons */}
+
+      {plantedFlowers.map((flower) => (
+        <LottieView
+          key={flower.id}
+          source={flower.source}
+          autoPlay
+          loop
+          style={{
+            position: 'absolute',
+            width: width * 0.25,
+            height: width * 0.25,
+            left: flower.left * width,
+            top: flower.top,
+          }}
+        />
+      ))}
+
       <View style={styles.timeToggle}>
         {['sunrise', 'day', 'sunset', 'night'].map((t) => (
           <TouchableOpacity key={t} onPress={() => setTimeOfDay(t)} style={styles.timeButton}>
@@ -110,7 +131,6 @@ export default function GardenScreen() {
         <Text style={styles.plantButtonText}>Plant Flower 🌸</Text>
       </TouchableOpacity>
 
-      {/* Mood Color Picker */}
       <View style={styles.colorPicker}>
         {['#FFDDEE', '#B2F7EF', '#FFF1A5', '#D0F0C0'].map((color) => (
           <TouchableOpacity
@@ -126,11 +146,6 @@ export default function GardenScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  sky: {
-    position: 'absolute',
-    width: '100%',
-    height: '55%',
-  },
   gardenArea: {
     flex: 1,
     justifyContent: 'center',
@@ -144,7 +159,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   flowerWrapper: {
-    marginTop: 20, // shifts flowers down to "sit" on ground
+    marginTop: 20,
   },
   plant: {
     width: width * 0.35,
@@ -167,7 +182,7 @@ const styles = StyleSheet.create({
   },
   timeToggle: {
     position: 'absolute',
-    top: 50, // moved down from 10 so it's tappable
+    top: 50,
     right: 10,
     flexDirection: 'row',
     backgroundColor: '#ffffffcc',
@@ -211,3 +226,4 @@ const styles = StyleSheet.create({
     color: '#444',
   },
 });
+

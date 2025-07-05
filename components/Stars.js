@@ -22,7 +22,7 @@ export default function Stars({ color = '#FFDDEE' }) {
             cx={star.cx}
             cy={star.cy}
             r={star.r}
-            fill={color}
+            fill="#E0EAFB"
             opacity={star.opacity}
           />
         ))}
