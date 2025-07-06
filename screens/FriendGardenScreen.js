@@ -18,7 +18,7 @@ import useCelestialPosition from '../utils/useCelestialPosition';
 import useWeather from '../hooks/useWeather';
 
 import { auth, db } from '../firebaseConfig';
-import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
@@ -80,34 +80,73 @@ export default function FriendGardenScreen({ route }) {
     return { hours, minutes };
   }
 
+  // const plantThoughtFlower = async (thought) => {
+  //   if (!userId) return;
+
+  //   const sourceIndex = Math.floor(Math.random() * flowerSources.length);
+  //   const left = Math.random() * 0.8 + 0.1;
+
+  //   const screenHeight = Dimensions.get('window').height;
+  //   const groundTopY = screenHeight * 0.40;
+  //   const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
+
+  //   const flowerData = {
+  //     left,
+  //     top,
+  //     sourceIndex,
+
+  //     thought: {
+  //     ...thought,
+  //     sender: auth.currentUser?.name || 'Anonymous',
+  //     timestamp: Date.now(),
+  //   },
+  //   };
+
+  //   try {
+  //     await addDoc(collection(db, 'users', userId, 'garden'), flowerData);
+  //   } catch (error) {
+  //     console.log('Error adding flower:', error);
+  //   }
+  // };
+
   const plantThoughtFlower = async (thought) => {
-    if (!userId) return;
+  if (!userId) return;
 
-    const sourceIndex = Math.floor(Math.random() * flowerSources.length);
-    const left = Math.random() * 0.8 + 0.1;
+  const sourceIndex = Math.floor(Math.random() * flowerSources.length);
+  const left = Math.random() * 0.8 + 0.1;
 
-    const screenHeight = Dimensions.get('window').height;
-    const groundTopY = screenHeight * 0.40;
-    const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
+  const screenHeight = Dimensions.get('window').height;
+  const groundTopY = screenHeight * 0.40;
+  const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
 
-    const flowerData = {
-      left,
-      top,
-      sourceIndex,
-
-      thought: {
+  const flowerData = {
+    left,
+    top,
+    sourceIndex,
+    thought: {
       ...thought,
-      sender: auth.currentUser?.name || 'Anonymous',
+      sender: auth.currentUser?.displayName || auth.currentUser?.email || 'Anonymous',
       timestamp: Date.now(),
     },
-    };
-
-    try {
-      await addDoc(collection(db, 'users', userId, 'garden'), flowerData);
-    } catch (error) {
-      console.log('Error adding flower:', error);
-    }
   };
+
+  try {
+    // Save flower in friend's garden
+    await addDoc(collection(db, 'users', userId, 'garden'), flowerData);
+
+    // 💬 Also send a flower message to the chat
+    const chatId = [auth.currentUser.uid, userId].sort().join('_');
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      senderId: auth.currentUser.uid,
+      type: 'flower',
+      thought: flowerData.thought, // include the thought message
+      timestamp: serverTimestamp(),
+    });
+  } catch (error) {
+    console.log('Error planting flower or sending message:', error);
+  }
+};
+
 
   return (
     <View style={styles.container}>

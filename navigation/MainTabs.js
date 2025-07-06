@@ -3,10 +3,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 
 import GardenScreen from '../screens/GardenScreen';
-import FriendsScreen from '../screens/FriendsScreen';
-import MessagesScreen from '../screens/MessagesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import FriendsStack from './FriendsStack';
+import MessagesStack from './MessagesStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,7 +30,7 @@ export default function MainTabs() {
     >
       <Tab.Screen name="Garden" component={GardenScreen} />
       <Tab.Screen name="Friends" component={FriendsStack} />
-      <Tab.Screen name="Messages" component={MessagesScreen} />
+      <Tab.Screen name="Messages" component={MessagesStack} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
