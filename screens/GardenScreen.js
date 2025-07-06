@@ -9,6 +9,8 @@ import Sun from '../components/Sun';
 import Moon from '../components/Moon';
 import MoodLamp from '../components/MoodLamp';
 import useWeather from '../hooks/useWeather';
+import SendThoughtModal from '../components/SendThoughtModal';
+import ThoughtDetailModal from '../components/ThoughtDetailModal';
 
 const { width } = Dimensions.get('window');
 
@@ -25,8 +27,10 @@ export default function GardenScreen() {
   const [plantedFlowers, setPlantedFlowers] = useState([]);
   const { x, y } = useCelestialPosition(timeOfDay);
   const { weather, error } = useWeather();
+  const [showThoughtModal, setShowThoughtModal] = useState(false);
+  const [selectedThought, setSelectedThought] = useState(null);
 
-  const plantRandomFlower = () => {
+  const plantThoughtFlower = (thought) => {
     const source = flowerSources[Math.floor(Math.random() * flowerSources.length)];
     const left = Math.random() * 0.8 + 0.1;
 
@@ -39,10 +43,12 @@ export default function GardenScreen() {
       source,
       left,
       top,
+      thought,
     };
 
     setPlantedFlowers((prev) => [...prev, newFlower]);
   };
+
 
   useEffect(() => {
     if (!weather) return;
@@ -104,19 +110,20 @@ export default function GardenScreen() {
 
 
       {plantedFlowers.map((flower) => (
-        <LottieView
-          key={flower.id}
-          source={flower.source}
-          autoPlay
-          loop
-          style={{
-            position: 'absolute',
-            width: width * 0.25,
-            height: width * 0.25,
-            left: flower.left * width,
-            top: flower.top,
-          }}
-        />
+        <TouchableOpacity key={flower.id} onPress={() => setSelectedThought(flower.thought)}>
+          <LottieView
+            source={flower.source}
+            autoPlay
+            loop
+            style={{
+              position: 'absolute',
+              width: width * 0.25,
+              height: width * 0.25,
+              left: flower.left * width,
+              top: flower.top,
+            }}
+          />
+        </TouchableOpacity>
       ))}
 
       <View style={styles.timeToggle}>
@@ -127,7 +134,7 @@ export default function GardenScreen() {
         ))}
       </View>
 
-      <TouchableOpacity onPress={plantRandomFlower} style={styles.plantButton}>
+      <TouchableOpacity onPress={() => setShowThoughtModal(true)} style={styles.plantButton}>
         <Text style={styles.plantButtonText}>Plant Flower 🌸</Text>
       </TouchableOpacity>
 
@@ -140,6 +147,16 @@ export default function GardenScreen() {
           />
         ))}
       </View>
+      <SendThoughtModal
+        visible={showThoughtModal}
+        onClose={() => setShowThoughtModal(false)}
+        onSend={(message) => {
+          plantThoughtFlower(message);
+        }}
+      />
+
+      <ThoughtDetailModal thought={selectedThought} onClose={() => setSelectedThought(null)} />
+
     </View>
   );
 }
