@@ -1,16 +1,161 @@
+// import React, { useState, useEffect } from 'react';
+// import { View, StyleSheet, TouchableOpacity, Dimensions, Text } from 'react-native';
+// import LottieView from 'lottie-react-native';
+// import NightStarLayer from '../components/NightStarLayer';
+// import SkyGradient from '../components/SkyGradient';
+// import Clouds from '../components/Clouds';
+// import useCelestialPosition from '../utils/useCelestialPosition';
+// import Sun from '../components/Sun';
+// import Moon from '../components/Moon';
+// import MoodLamp from '../components/MoodLamp';
+// import useWeather from '../hooks/useWeather';
+// import SendThoughtModal from '../components/SendThoughtModal';
+// import ThoughtDetailModal from '../components/ThoughtDetailModal';
+// import GardenView from '../components/GardenView';
+
+// const { width } = Dimensions.get('window');
+
+// const flowerSources = [
+//   require('../assets/lottie/flower1.json'),
+//   require('../assets/lottie/flower2.json'),
+//   require('../assets/lottie/flower3.json'),
+//   require('../assets/lottie/flower4.json'),
+// ];
+
+
+
+// export default function GardenScreen() {
+//   const [moodColor, setMoodColor] = useState('#FFDDEE');
+//   const [timeOfDay, setTimeOfDay] = useState('day');
+//   const [plantedFlowers, setPlantedFlowers] = useState([]);
+//   const { x, y } = useCelestialPosition(timeOfDay);
+//   const { weather, error } = useWeather();
+//   const [showThoughtModal, setShowThoughtModal] = useState(false);
+//   const [selectedThought, setSelectedThought] = useState(null);
+
+//   const plantThoughtFlower = (thought) => {
+//     const source = flowerSources[Math.floor(Math.random() * flowerSources.length)];
+//     const left = Math.random() * 0.8 + 0.1;
+
+//     const screenHeight = Dimensions.get('window').height;
+//     const groundTopY = screenHeight * 0.40;
+//     const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
+
+//     const newFlower = {
+//       id: Date.now().toString(),
+//       source,
+//       left,
+//       top,
+//       thought,
+//     };
+
+//     setPlantedFlowers((prev) => [...prev, newFlower]);
+//   };
+
+//   const filteredFlowers = plantedFlowers.filter(
+//     (f) => f.thought?.sender === 'You' // restrict visibility
+//   );
+
+//   useEffect(() => {
+//     if (!weather) return;
+
+//     const now = new Date();
+//     const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+//     const sunriseTime = parseTime12h(weather.sunrise);
+//     const sunsetTime = parseTime12h(weather.sunset);
+
+//     const sunriseMin = sunriseTime.hours * 60 + sunriseTime.minutes;
+//     const sunsetMin = sunsetTime.hours * 60 + sunsetTime.minutes;
+
+//     if (currentMinutes < sunriseMin) setTimeOfDay('night');
+//     else if (currentMinutes < sunriseMin + 60) setTimeOfDay('sunrise');
+//     else if (currentMinutes < sunsetMin - 60) setTimeOfDay('day');
+//     else if (currentMinutes < sunsetMin) setTimeOfDay('sunset');
+//     else setTimeOfDay('night');
+
+//   }, [weather]);
+
+//   function parseTime12h(timeStr) {
+//   // e.g. "6:00 AM" or "7:01 PM"
+//   const [time, modifier] = timeStr.split(' ');
+//   let [hours, minutes] = time.split(':').map(Number);
+
+//   if (modifier === 'PM' && hours !== 12) {
+//     hours += 12;
+//   }
+//   if (modifier === 'AM' && hours === 12) {
+//     hours = 0;
+//   }
+
+//   return { hours, minutes };
+// }
+
+//   return (
+//     <View style={styles.container}>
+//       <SkyGradient timeOfDay={timeOfDay} />
+//       {(timeOfDay === 'day' || timeOfDay === 'sunrise') && (
+//         <Clouds show={true} cloud={weather?.cloud} />
+//       )}
+
+//       {(timeOfDay === 'night' || timeOfDay === 'sunset') && (
+//         <NightStarLayer />
+//       )}
+
+//       <MoodLamp color={moodColor} />
+
+//       {timeOfDay === 'day' && <Sun x={x} y={y} />}
+//       {timeOfDay === 'night' && <Moon x={x} y={y} />}
+//       {timeOfDay === 'sunrise' && <Sun x={x} y={y} />}
+//       {timeOfDay === 'sunset' && <Moon x={x} y={y} />}
+
+//       <View style={styles.ground} />
+
+//       <Clouds show={timeOfDay === 'day' || timeOfDay === 'sunrise'} coverage={(weather?.cloud || 0) / 100} />
+
+
+//       <GardenView
+//         flowers={filteredFlowers}
+//         onPressFlower={(thought) => setSelectedThought(thought)}
+//       />
+
+//       <View style={styles.timeToggle}>
+//         {['sunrise', 'day', 'sunset', 'night'].map((t) => (
+//           <TouchableOpacity key={t} onPress={() => setTimeOfDay(t)} style={styles.timeButton}>
+//             <Text style={styles.timeText}>{t}</Text>
+//           </TouchableOpacity>
+//         ))}
+//       </View>
+//       <SendThoughtModal
+//         visible={showThoughtModal}
+//         onClose={() => setShowThoughtModal(false)}
+//         onSend={(message) => {
+//           plantThoughtFlower(message);
+//         }}
+//       />
+
+//       <ThoughtDetailModal thought={selectedThought} onClose={() => setSelectedThought(null)} />
+
+//     </View>
+//   );
+// }
+
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Text } from 'react-native';
 import LottieView from 'lottie-react-native';
-import NightStarLayer from '../components/NightStarLayer';
 import SkyGradient from '../components/SkyGradient';
 import Clouds from '../components/Clouds';
-import useCelestialPosition from '../utils/useCelestialPosition';
+import NightStarLayer from '../components/NightStarLayer';
+import MoodLamp from '../components/MoodLamp';
 import Sun from '../components/Sun';
 import Moon from '../components/Moon';
-import MoodLamp from '../components/MoodLamp';
+import useCelestialPosition from '../utils/useCelestialPosition';
 import useWeather from '../hooks/useWeather';
-import SendThoughtModal from '../components/SendThoughtModal';
 import ThoughtDetailModal from '../components/ThoughtDetailModal';
+import GardenView from '../components/GardenView';
+
+import { auth, db } from '../firebaseConfig';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
@@ -26,29 +171,25 @@ export default function GardenScreen() {
   const [timeOfDay, setTimeOfDay] = useState('day');
   const [plantedFlowers, setPlantedFlowers] = useState([]);
   const { x, y } = useCelestialPosition(timeOfDay);
-  const { weather, error } = useWeather();
-  const [showThoughtModal, setShowThoughtModal] = useState(false);
+  const { weather } = useWeather();
   const [selectedThought, setSelectedThought] = useState(null);
 
-  const plantThoughtFlower = (thought) => {
-    const source = flowerSources[Math.floor(Math.random() * flowerSources.length)];
-    const left = Math.random() * 0.8 + 0.1;
+  const userId = auth.currentUser?.uid;
 
-    const screenHeight = Dimensions.get('window').height;
-    const groundTopY = screenHeight * 0.40;
-    const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
+  useEffect(() => {
+    if (!userId) return;
+    const gardenRef = collection(db, 'users', userId, 'garden');
 
-    const newFlower = {
-      id: Date.now().toString(),
-      source,
-      left,
-      top,
-      thought,
-    };
+    const unsubscribe = onSnapshot(gardenRef, (snapshot) => {
+      const flowersFromDb = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPlantedFlowers(flowersFromDb);
+    });
 
-    setPlantedFlowers((prev) => [...prev, newFlower]);
-  };
-
+    return () => unsubscribe();
+  }, [userId]);
 
   useEffect(() => {
     if (!weather) return;
@@ -67,23 +208,15 @@ export default function GardenScreen() {
     else if (currentMinutes < sunsetMin - 60) setTimeOfDay('day');
     else if (currentMinutes < sunsetMin) setTimeOfDay('sunset');
     else setTimeOfDay('night');
-
   }, [weather]);
 
   function parseTime12h(timeStr) {
-  // e.g. "6:00 AM" or "7:01 PM"
-  const [time, modifier] = timeStr.split(' ');
-  let [hours, minutes] = time.split(':').map(Number);
-
-  if (modifier === 'PM' && hours !== 12) {
-    hours += 12;
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (modifier === 'PM' && hours !== 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+    return { hours, minutes };
   }
-  if (modifier === 'AM' && hours === 12) {
-    hours = 0;
-  }
-
-  return { hours, minutes };
-}
 
   return (
     <View style={styles.container}>
@@ -91,13 +224,8 @@ export default function GardenScreen() {
       {(timeOfDay === 'day' || timeOfDay === 'sunrise') && (
         <Clouds show={true} cloud={weather?.cloud} />
       )}
-
-      {(timeOfDay === 'night' || timeOfDay === 'sunset') && (
-        <NightStarLayer />
-      )}
-
+      {(timeOfDay === 'night' || timeOfDay === 'sunset') && <NightStarLayer />}
       <MoodLamp color={moodColor} />
-
       {timeOfDay === 'day' && <Sun x={x} y={y} />}
       {timeOfDay === 'night' && <Moon x={x} y={y} />}
       {timeOfDay === 'sunrise' && <Sun x={x} y={y} />}
@@ -105,58 +233,15 @@ export default function GardenScreen() {
 
       <View style={styles.ground} />
 
-      {/* <Clouds show={timeOfDay === 'day' || timeOfDay === 'sunrise'} coverage={weather?.clouds?.all / 100 || 0} /> */}
-      <Clouds show={timeOfDay === 'day' || timeOfDay === 'sunrise'} coverage={(weather?.cloud || 0) / 100} />
-
-
-      {plantedFlowers.map((flower) => (
-        <TouchableOpacity key={flower.id} onPress={() => setSelectedThought(flower.thought)}>
-          <LottieView
-            source={flower.source}
-            autoPlay
-            loop
-            style={{
-              position: 'absolute',
-              width: width * 0.25,
-              height: width * 0.25,
-              left: flower.left * width,
-              top: flower.top,
-            }}
-          />
-        </TouchableOpacity>
-      ))}
-
-      <View style={styles.timeToggle}>
-        {['sunrise', 'day', 'sunset', 'night'].map((t) => (
-          <TouchableOpacity key={t} onPress={() => setTimeOfDay(t)} style={styles.timeButton}>
-            <Text style={styles.timeText}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity onPress={() => setShowThoughtModal(true)} style={styles.plantButton}>
-        <Text style={styles.plantButtonText}>Plant Flower 🌸</Text>
-      </TouchableOpacity>
-
-      <View style={styles.colorPicker}>
-        {['#FFDDEE', '#B2F7EF', '#FFF1A5', '#D0F0C0'].map((color) => (
-          <TouchableOpacity
-            key={color}
-            onPress={() => setMoodColor(color)}
-            style={[styles.colorCircle, { backgroundColor: color }]}
-          />
-        ))}
-      </View>
-      <SendThoughtModal
-        visible={showThoughtModal}
-        onClose={() => setShowThoughtModal(false)}
-        onSend={(message) => {
-          plantThoughtFlower(message);
-        }}
+      <GardenView
+        flowers={plantedFlowers.map((f) => ({
+          ...f,
+          source: flowerSources[f.sourceIndex],
+        }))}
+        onPressFlower={(thought) => setSelectedThought(thought)}
       />
 
       <ThoughtDetailModal thought={selectedThought} onClose={() => setSelectedThought(null)} />
-
     </View>
   );
 }

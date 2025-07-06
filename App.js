@@ -1,44 +1,36 @@
-import React from 'react';
-import { Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebaseConfig';
 
 // Screens
-import GardenScreen from './screens/GardenScreen';
-import MessagesScreen from './screens/MessagesScreen';
-import SettingsScreen from './screens/SettingsScreen';
-// import FriendsScreen from './screens/FriendsScreen';
-// import FriendGardenScreen from './screens/FriendGardenScreen';
-import FriendsStack from './FriendsStack';
+import LoginScreen from './screens/LoginScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import MainTabs from './navigation/MainTabs'; // this has tab navigator with 'Garden'
 
-function EmojiIcon({ emoji }) {
-  return <Text style={{ fontSize: 18 }}>{emoji}</Text>;
-}
-
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return unsubscribe;
+  }, []);
+
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: () => {
-            let emoji = '❓';
-            if (route.name === 'Garden') emoji = '🌿';
-            else if (route.name === 'Friends') emoji = '🌷';
-            else if (route.name === 'Messages') emoji = '💌';
-            else if (route.name === 'Settings') emoji = '⚙️';
-            
-            return <EmojiIcon emoji={emoji} />;
-          },
-          headerShown: false,
-        })}
-      >
-        <Tab.Screen name="Garden" component={GardenScreen} />
-        <Tab.Screen name="Friends" component={FriendsStack} />
-        <Tab.Screen name="Messages" component={MessagesScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
-      </Tab.Navigator>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
