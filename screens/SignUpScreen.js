@@ -26,9 +26,18 @@ export default function SignUpScreen({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
+      const generatePastelColor = () => {
+        const hue = Math.floor(Math.random() * 360);
+        return `hsl(${hue}, 70%, 85%)`;
+      };
+
+      const userColor = generatePastelColor();
+
+
       await setDoc(doc(db, 'users', uid), {
         email,
         name,
+        color: userColor,
         garden: [],
         friends: [],
         incomingRequests: [],

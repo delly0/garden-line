@@ -61,38 +61,42 @@ export default function MessagesScreen() {
     navigation.navigate('Chat', {
       userId: friend.id,
       userName: friend.name,
+      userColor: friend.color || '#FADADD',
     });
   };
 
+    const renderItem = ({ item }) => {
+      const preview = messagesPreview[item.id];
 
-  const renderItem = ({ item }) => {
-  const preview = messagesPreview[item.id];
+      const previewText = preview
+        ? preview.type === 'text'
+          ? preview.content.length > 50
+            ? preview.content.substring(0, 47) + '...'
+            : preview.content
+          : preview.type === 'flower'
+          ? '🌸 You received a flower!'
+          : preview.type === 'image'
+          ? '[Image]'
+          : preview.type === 'audio'
+          ? '[Audio]'
+          : preview.type === 'song'
+          ? '[Spotify Track]'
+          : '[Attachment]'
+        : 'Start chatting...';
 
-  const previewText = preview
-    ? preview.type === 'text'
-      ? preview.content.length > 50
-        ? preview.content.substring(0, 47) + '...'
-        : preview.content
-    : preview.type === 'flower'
-      ? '🌸 You received a flower!'
-    : preview.type === 'image'
-      ? '[Image]'
-    : preview.type === 'audio'
-      ? '[Audio]'
-    : preview.type === 'song'
-      ? '[Spotify Track]'
-    : '[Attachment]'
-    : 'Start chatting...';
+      return (
+        <TouchableOpacity
+          style={[styles.chatItem, { backgroundColor: item.color || '#f0f0f0' }]}
+          onPress={() => openChat(item)}
+        >
+          <Text style={[styles.name, { color: '#333' }]}>{item.name}</Text>
+          <Text style={styles.preview} numberOfLines={1}>
+            {previewText}
+          </Text>
+        </TouchableOpacity>
+      );
+    };
 
-  return (
-    <TouchableOpacity style={styles.chatItem} onPress={() => openChat(item)}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.preview} numberOfLines={1}>
-        {previewText}
-      </Text>
-    </TouchableOpacity>
-  );
-};
 
   return (
     <View style={styles.container}>

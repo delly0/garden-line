@@ -130,7 +130,8 @@ function FlowerThoughtContent({ thought }) {
 
 
 export default function ChatScreen({ route }) {
-  const { userId: friendId, userName } = route.params;
+  // const { userId: friendId, userName } = route.params;
+  const { userId: friendId, userName, userColor } = route.params;
   const currentUser = auth.currentUser;
 
   const [messages, setMessages] = useState([]);
@@ -236,12 +237,19 @@ if (prevMessage?.timestamp && item.timestamp) {
             </Text>
             ) : null}
 
-      <View
+      {/* <View
         style={[
           styles.message,
           isMe ? styles.myMessage : styles.theirMessage,
         ]}
+      > */}
+        <View
+        style={[
+          styles.message,
+          isMe ? styles.myMessage : { ...styles.theirMessage, backgroundColor: userColor || '#FADADD' },
+        ]}
       >
+
         {item.type === 'text' || !item.type ? (
           <Text style={styles.content}>{item.content}</Text>
         ) : (item.type === 'image' || item.type === 'gif') ? (

@@ -2,27 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, Button, Dimensions } from 'react-native';
 import { Audio } from 'expo-av';
 import { WebView } from 'react-native-webview';
-
-
+import { Platform, Vibration } from 'react-native';
 
 export default function ThoughtDetailModal({ thought, onClose }) {
-  if (!thought) return null;
   const { width } = Dimensions.get('window');
-
-  const readableDate = new Date(thought.timestamp).toLocaleString();
-
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef(null);
 
-  // Load the audio when modal opens and thought is audio
   useEffect(() => {
-    if (thought.type === 'audio' && typeof thought.content === 'string') {
+    if (thought?.type === 'audio' && typeof thought.content === 'string') {
       const loadSound = async () => {
         try {
           const { sound } = await Audio.Sound.createAsync({ uri: thought.content });
           soundRef.current = sound;
 
-          // Listen for playback status updates to update isPlaying
           sound.setOnPlaybackStatusUpdate((status) => {
             if (!status.isLoaded) return;
             setIsPlaying(status.isPlaying);
@@ -34,7 +27,6 @@ export default function ThoughtDetailModal({ thought, onClose }) {
 
       loadSound();
 
-      // Cleanup on unmount or thought change
       return () => {
         if (soundRef.current) {
           soundRef.current.unloadAsync();
@@ -59,6 +51,37 @@ export default function ThoughtDetailModal({ thought, onClose }) {
     }
   };
 
+
+  // const playVibration = () => {
+  //   let pattern = thought?.content;
+  //   if (!pattern) return;
+
+  //   if (typeof pattern === 'string') {
+  //     try {
+  //       pattern = JSON.parse(pattern);
+  //     } catch (err) {
+  //       console.log('Invalid vibration pattern');
+  //       return;
+  //     }
+  //   }
+
+  //   if (!Array.isArray(pattern)) return;
+
+  //   if (Platform.OS === 'ios') {
+  //     Vibration.vibrate(); // fallback for iOS
+  //   } else {
+  //     Vibration.vibrate(pattern);
+  //   }
+  // };
+
+
+  // Extract track ID for Spotify song type
+  const trackId = thought?.type === 'song' ? extractTrackId(thought.content) : null;
+
+  if (!thought) return null;
+
+  const readableDate = new Date(thought.timestamp).toLocaleString();
+
   return (
     <Modal visible={true} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -82,15 +105,9 @@ export default function ThoughtDetailModal({ thought, onClose }) {
                 />
               </View>
             )}
-            {thought.type === 'song' && typeof thought.content === 'string' && (() => {
-              const rawUrl = thought.content;
-              const trackId = extractTrackId(rawUrl);
 
-              if (!trackId) {
-                return <Text style={{ color: 'red' }}>⚠️ Invalid Spotify link</Text>;
-              }
-
-              return (
+            {thought.type === 'song' && (
+              trackId ? (
                 <View style={{ height: 100, overflow: 'hidden', borderRadius: 12 }}>
                   <WebView
                     source={{ uri: `https://open.spotify.com/embed/track/${trackId}` }}
@@ -99,12 +116,19 @@ export default function ThoughtDetailModal({ thought, onClose }) {
                     scrollEnabled={false}
                   />
                 </View>
-              );
-            })()}
-
-
+              ) : (
+                <Text style={{ color: 'red' }}>⚠️ Invalid Spotify link</Text>
+              )
+            )}
+            {/* {thought.type === 'vibration' && (
+              <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>
+                  💫 You received a vibration touch!
+                </Text>
+                <Button title="Play Vibration" onPress={playVibration} />
+              </View>
+            )} */}
           </View>
-
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeText}>Close</Text>
           </TouchableOpacity>
@@ -114,7 +138,6 @@ export default function ThoughtDetailModal({ thought, onClose }) {
   );
 }
 
-// Helper to extract Spotify track ID from URL/URI
 function extractTrackId(url) {
   if (!url) return '';
   let match = url.match(/track\/([a-zA-Z0-9]+)/);
@@ -123,7 +146,6 @@ function extractTrackId(url) {
   if (match && match[1]) return match[1];
   return '';
 }
-
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: '#00000066', justifyContent: 'center', alignItems: 'center' },

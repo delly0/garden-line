@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, Button, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity } from 'react-native';
 import { auth } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import LottieView from 'lottie-react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig'; 
+import { updateDoc } from 'firebase/firestore';
+// import { ColorPicker } from 'react-native-color-picker';
+import ColorPicker from 'react-native-wheel-color-picker';
+import { Modal } from 'react-native';
+
 
 
 const flowerSources = [
@@ -18,6 +23,27 @@ const { width } = Dimensions.get('window');
 
 export default function SettingsScreen() {
   const [userData, setUserData] = useState(null);
+
+  const [userColor, setUserColor] = useState(null);
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  const [tempColor, setTempColor] = useState(userColor);
+
+
+  useEffect(() => {
+    if (userData?.color) {
+      setUserColor(userData.color);
+    }
+  }, [userData]);
+
+  const updateColor = async (newColor) => {
+    setUserColor(newColor);
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { color: newColor });
+    } catch (err) {
+      console.log('Error updating color:', err);
+    }
+  };
+
 
 
   useEffect(() => {
@@ -56,6 +82,15 @@ export default function SettingsScreen() {
   };
 
   if (!userData) return null;
+  <TouchableOpacity
+    onPress={() => {
+      setTempColor(userColor); // initialize with current color
+      setColorPickerVisible(true);
+    }}
+    style={[styles.selectedColorPreview, { backgroundColor: userColor || '#ccc' }]}
+  >
+    <Text style={styles.colorText}>Tap to change</Text>
+  </TouchableOpacity>
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,6 +109,54 @@ export default function SettingsScreen() {
           {new Date(userData.createdAt).toLocaleDateString()}
         </Text>
       </View>
+
+      <Text style={styles.label}>My Colour:</Text>
+      <TouchableOpacity
+        onPress={() => setColorPickerVisible(true)}
+        style={[styles.selectedColorPreview, { backgroundColor: userColor || '#ccc' }]}
+      >
+        <Text style={styles.colorText}>Tap to change</Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={colorPickerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setColorPickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.pickerTitle}>Pick Your Colour</Text>
+
+            <ColorPicker
+              color={tempColor || '#FFB3BA'}
+              onColorChange={setTempColor}
+              thumbSize={24}
+              sliderSize={24}
+              noSnap={true}
+              row={false}
+              style={{ width: 290, height: 290 }}
+            />
+
+            <View style={styles.buttonRow}>
+              <Button
+                title="Cancel"
+                onPress={() => {
+                  setTempColor(userColor);
+                  setColorPickerVisible(false);
+                }}
+              />
+              <Button
+                title="Done"
+                onPress={() => {
+                  updateColor(tempColor);
+                  setColorPickerVisible(false);
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Button title="Log Out" onPress={handleLogout} color="#D97B66" />
 
@@ -124,5 +207,48 @@ const styles = StyleSheet.create({
   flower: {
     width: width * 0.15,
     height: width * 0.15,
+  },
+  colorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    marginBottom: 30,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',  // semi-transparent dark overlay
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: 340,
+    height: 430,  // enough height for color picker + buttons + text
+    maxWidth: '90%',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 10,
+    justifyContent: 'space-between',
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'center',
+    color: '#333',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
 });

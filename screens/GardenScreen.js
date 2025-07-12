@@ -11,9 +11,10 @@ import useCelestialPosition from '../utils/useCelestialPosition';
 import useWeather from '../hooks/useWeather';
 import ThoughtDetailModal from '../components/ThoughtDetailModal';
 import GardenView from '../components/GardenView';
+import * as Location from 'expo-location';
 
 import { auth, db } from '../firebaseConfig';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
@@ -24,15 +25,42 @@ const flowerSources = [
   require('../assets/lottie/flower4.json'),
 ];
 
+
 export default function GardenScreen() {
+  const [coords, setCoords] = useState(null);
   const [moodColor, setMoodColor] = useState('#FFDDEE');
   const [timeOfDay, setTimeOfDay] = useState('day');
   const [plantedFlowers, setPlantedFlowers] = useState([]);
   const { x, y } = useCelestialPosition(timeOfDay);
   const { weather } = useWeather();
   const [selectedThought, setSelectedThought] = useState(null);
-
   const userId = auth.currentUser?.uid;
+  const [currentUserColor, setCurrentUserColor] = useState('#BAFFC9'); 
+
+    useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+
+      let location = await Location.getCurrentPositionAsync({});
+      setCoords({
+        lat: location.coords.latitude,
+        lon: location.coords.longitude,
+      });
+    })();
+  }, []);
+
+  useEffect(() => {
+  const fetchUserColor = async () => {
+    if (!auth.currentUser) return;
+    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    if (userDoc.exists()) {
+      setCurrentUserColor(userDoc.data().color || '#BAFFC9');
+    }
+  };
+  fetchUserColor();
+}, [auth.currentUser]);
+
 
   useEffect(() => {
     if (!userId) return;
@@ -83,13 +111,14 @@ export default function GardenScreen() {
         <Clouds show={true} cloud={weather?.cloud} />
       )}
       {(timeOfDay === 'night' || timeOfDay === 'sunset') && <NightStarLayer />}
-      <MoodLamp color={moodColor} />
       {timeOfDay === 'day' && <Sun x={x} y={y} />}
       {timeOfDay === 'night' && <Moon x={x} y={y} />}
       {timeOfDay === 'sunrise' && <Sun x={x} y={y} />}
       {timeOfDay === 'sunset' && <Moon x={x} y={y} />}
 
       <View style={styles.ground} />
+
+      {/* <MoodLamp currentUserColor={currentUserColor} /> */}
 
       <GardenView
         flowers={plantedFlowers.map((f) => ({

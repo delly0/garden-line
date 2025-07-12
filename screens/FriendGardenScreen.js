@@ -18,7 +18,7 @@ import useCelestialPosition from '../utils/useCelestialPosition';
 import useWeather from '../hooks/useWeather';
 
 import { auth, db } from '../firebaseConfig';
-import { collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
@@ -36,8 +36,24 @@ export default function FriendGardenScreen({ route }) {
   const [moodColor, setMoodColor] = useState('#FFDDEE');
   const [timeOfDay, setTimeOfDay] = useState('day');
 
-  const { weather } = useWeather();
+  const [friendCoords, setFriendCoords] = useState(null);
+
+  // Get friend’s saved lat/lon
+  useEffect(() => {
+    const userDoc = doc(db, 'users', userId);
+    getDoc(userDoc).then((docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setFriendCoords({ lat: data.lat, lon: data.lon });
+      }
+    });
+  }, [userId]);
+
+  const { weather } = useWeather(friendCoords?.lat, friendCoords?.lon);
+
+  
   const { x, y } = useCelestialPosition(timeOfDay);
+  
 
   useEffect(() => {
     if (!userId) return;
@@ -79,35 +95,6 @@ export default function FriendGardenScreen({ route }) {
     if (modifier === 'AM' && hours === 12) hours = 0;
     return { hours, minutes };
   }
-
-  // const plantThoughtFlower = async (thought) => {
-  //   if (!userId) return;
-
-  //   const sourceIndex = Math.floor(Math.random() * flowerSources.length);
-  //   const left = Math.random() * 0.8 + 0.1;
-
-  //   const screenHeight = Dimensions.get('window').height;
-  //   const groundTopY = screenHeight * 0.40;
-  //   const top = groundTopY + Math.random() * (screenHeight * 0.45 - width * 0.25);
-
-  //   const flowerData = {
-  //     left,
-  //     top,
-  //     sourceIndex,
-
-  //     thought: {
-  //     ...thought,
-  //     sender: auth.currentUser?.name || 'Anonymous',
-  //     timestamp: Date.now(),
-  //   },
-  //   };
-
-  //   try {
-  //     await addDoc(collection(db, 'users', userId, 'garden'), flowerData);
-  //   } catch (error) {
-  //     console.log('Error adding flower:', error);
-  //   }
-  // };
 
   const plantThoughtFlower = async (thought) => {
   if (!userId) return;
@@ -155,7 +142,7 @@ export default function FriendGardenScreen({ route }) {
         <Clouds show={true} cloud={weather?.cloud} />
       )}
       {(timeOfDay === 'sunset' || timeOfDay === 'night') && <NightStarLayer />}
-      <MoodLamp color={moodColor} />
+      {/* <MoodLamp color={moodColor} /> */}
       {timeOfDay === 'day' && <Sun x={x} y={y} />}
       {timeOfDay === 'night' && <Moon x={x} y={y} />}
       {timeOfDay === 'sunrise' && <Sun x={x} y={y} />}
