@@ -7,7 +7,7 @@ import { auth } from './firebaseConfig';
 // Screens
 import LoginScreen from './screens/LoginScreen';
 import SignUpScreen from './screens/SignUpScreen';
-import MainTabs from './navigation/MainTabs'; // this has tab navigator with 'Garden'
+import MainTabs from './navigation/MainTabs'; 
 
 const Stack = createNativeStackNavigator();
 

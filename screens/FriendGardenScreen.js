@@ -134,6 +134,12 @@ export default function FriendGardenScreen({ route }) {
   }
 };
 
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000; // milliseconds in 30 days
+const now = Date.now();
+const recentFlowers = flowers.filter(f => {
+  const ts = f.thought?.timestamp || 0;
+  return now - ts <= THIRTY_DAYS;
+});
 
   return (
     <View style={styles.container}>
@@ -142,7 +148,6 @@ export default function FriendGardenScreen({ route }) {
         <Clouds show={true} cloud={weather?.cloud} />
       )}
       {(timeOfDay === 'sunset' || timeOfDay === 'night') && <NightStarLayer />}
-      {/* <MoodLamp color={moodColor} /> */}
       {timeOfDay === 'day' && <Sun x={x} y={y} />}
       {timeOfDay === 'night' && <Moon x={x} y={y} />}
       {timeOfDay === 'sunrise' && <Sun x={x} y={y} />}
@@ -150,8 +155,10 @@ export default function FriendGardenScreen({ route }) {
 
       <View style={styles.ground} />
 
+      <MoodLamp ownerId={userId} />
+
       <GardenView
-        flowers={flowers.map((f) => ({
+        flowers={recentFlowers.map.map((f) => ({
           ...f,
           source: flowerSources[f.sourceIndex],
         }))}

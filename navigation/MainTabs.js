@@ -6,6 +6,7 @@ import GardenScreen from '../screens/GardenScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import FriendsStack from './FriendsStack';
 import MessagesStack from './MessagesStack';
+import PresenceStack from './PresenceStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -22,6 +23,7 @@ export default function MainTabs() {
           if (route.name === 'Garden') emoji = '🌿';
           else if (route.name === 'Friends') emoji = '🌷';
           else if (route.name === 'Messages') emoji = '💌';
+          else if (route.name === 'Presence') emoji = '🤝';
           else if (route.name === 'Settings') emoji = '⚙️';
           return <EmojiIcon emoji={emoji} />;
         },
@@ -31,6 +33,7 @@ export default function MainTabs() {
       <Tab.Screen name="Garden" component={GardenScreen} />
       <Tab.Screen name="Friends" component={FriendsStack} />
       <Tab.Screen name="Messages" component={MessagesStack} />
+      <Tab.Screen name="Presence" component={PresenceStack} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
