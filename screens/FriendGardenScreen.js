@@ -158,7 +158,7 @@ const recentFlowers = flowers.filter(f => {
       <MoodLamp ownerId={userId} />
 
       <GardenView
-        flowers={recentFlowers.map.map((f) => ({
+        flowers={recentFlowers.map((f) => ({
           ...f,
           source: flowerSources[f.sourceIndex],
         }))}
@@ -168,16 +168,6 @@ const recentFlowers = flowers.filter(f => {
       <TouchableOpacity onPress={() => setShowModal(true)} style={styles.plantButton}>
         <Text style={styles.plantButtonText}>Plant Flower 🌸</Text>
       </TouchableOpacity>
-
-      <View style={styles.colorPicker}>
-        {['#FFDDEE', '#B2F7EF', '#FFF1A5', '#D0F0C0'].map((color) => (
-          <TouchableOpacity
-            key={color}
-            onPress={() => setMoodColor(color)}
-            style={[styles.colorCircle, { backgroundColor: color }]}
-          />
-        ))}
-      </View>
 
       <SendThoughtModal
         visible={showModal}
